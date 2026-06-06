@@ -1,6 +1,6 @@
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from gtrending import fetch_repos
-from config import LANGUAGES, TRENDING_PERIOD, MIN_TOTAL_STARS, DEBUG
+from config import LANGUAGES, TRENDING_PERIOD, DEBUG
 
 
 def fetch_single(language: str, since: str = "daily") -> list[dict]:
