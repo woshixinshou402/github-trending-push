@@ -54,6 +54,7 @@ jobs:
 
       - name: Commit history
         if: always()
+        continue-on-error: true
         run: |
           if [ -f data/history.json ]; then
             git config user.name "github-actions[bot]"
