@@ -1,76 +1,43 @@
 import os
 
-# Languages to fetch trending repos for (empty string = all languages)
+# Only track these languages
 LANGUAGES = [
-    "",             # all languages
     "python",
-    "javascript",
-    "typescript",
-    "go",
-    "rust",
-    "java",
-    "c",
     "c++",
-    "c#",
-    "swift",
-    "kotlin",
-    "ruby",
-    "php",
-    "vue",
-    "html",
-    "css",
-    "shell",
-    "jupyter-notebook",
-    "dart",
-    "scala",
 ]
 
-# Language display names and emoji
 LANG_DISPLAY = {
-    "":            ("📊", "全语言"),
-    "python":      ("🐍", "Python"),
-    "javascript":  ("🟨", "JavaScript"),
-    "typescript":  ("🔷", "TypeScript"),
-    "go":          ("🔵", "Go"),
-    "rust":        ("🦀", "Rust"),
-    "java":        ("☕", "Java"),
-    "c":           ("⚙️", "C"),
-    "c++":         ("🔧", "C++"),
-    "c#":          ("🟣", "C#"),
-    "swift":       ("🍎", "Swift"),
-    "kotlin":      ("💜", "Kotlin"),
-    "ruby":        ("♦️", "Ruby"),
-    "php":         ("🐘", "PHP"),
-    "vue":         ("💚", "Vue"),
-    "html":        ("🏷️", "HTML"),
-    "css":         ("🎨", "CSS"),
-    "shell":       ("🐚", "Shell"),
-    "jupyter-notebook": ("📓", "Jupyter Notebook"),
-    "dart":        ("🎯", "Dart"),
-    "scala":       ("🔴", "Scala"),
-    "zig":         ("⚡", "Zig"),  # not supported by gtrending yet, keep for reference
+    "python":      ("Python", "python"),
+    "c++":         ("C++", "c++"),
 }
 
-# Star threshold: only include repos with at least this many total stars
-MIN_TOTAL_STARS = 100
+# Minimum added stars today to include
+MIN_ADDED_STARS = 500
 
-# Number of top repos per language in the report
-TOP_PER_LANGUAGE = 5
-
-# Number of repos in the all-language top list
-TOP_OVERALL = 10
+# Number of repos in the daily push
+TOP_OVERALL = 40
 
 # Trending period: "daily" or "weekly"
 TRENDING_PERIOD = "daily"
+
+# Filter out repos with these keywords in name/description (case-insensitive)
+EXCLUDE_KEYWORDS = [
+    "security", "vulnerability", "exploit", "pentest", "penetration",
+    "hack", "malware", "phishing", "cve-", "backdoor", "ransomware",
+    "fuzzer", "fuzzing", "payload", "shellcode", "rootkit", "keylogger",
+    "reverse-engineering", "reversing", "xss", "csrf", "sqli",
+    "redteam", "red-team", "blueteam", "blue-team", "cyber",
+    "cracking", "crack", "bypass", "spoof", "trojan", "virus",
+    "osint", "steganography", "forensic",
+]
 
 # WxPusher configuration
 WXPUSHER_APP_TOKEN = os.environ.get("WXPUSHER_APP_TOKEN", "")
 WXPUSHER_UID = os.environ.get("WXPUSHER_UID", "")
 
-# LLM configuration (optional, for AI summary)
+# LLM configuration
 LLM_API_KEY = os.environ.get("LLM_API_KEY") or ""
 LLM_API_BASE = os.environ.get("LLM_API_BASE") or "https://token-plan-cn.xiaomimimo.com/v1"
 LLM_MODEL = os.environ.get("LLM_MODEL") or "mimo-v2.5-pro"
 
-# GitHub Actions outputs debug info
 DEBUG = os.environ.get("DEBUG", "").lower() == "true"
