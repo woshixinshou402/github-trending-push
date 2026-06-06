@@ -50,29 +50,26 @@ def classify(repos_by_lang: dict[str, list[dict]]) -> dict:
     }
 
 
-def format_repo_card(repo: dict, for_lang_section: bool = False) -> str:
-    """Format a repo as a readable card with clear description of what it does."""
+def format_repo_card(repo: dict) -> str:
+    """Format a repo as a readable card. Uses AI-enriched Chinese desc if available."""
     fullname = repo.get("fullname", "")
     stars = repo.get("stars", 0)
     added = repo.get("added_stars", 0)
-    desc = repo.get("description", "") or ""
-    url = repo.get("url", f"https://github.com/{fullname}")
     lang = repo.get("language", "")
+    url = repo.get("url", f"https://github.com/{fullname}")
 
-    # Build clean description
+    # Prefer AI-enriched Chinese description
+    desc = repo.get("desc_cn", "") or repo.get("description", "") or ""
     desc = desc.strip().replace("\n", " ")
     if not desc:
         desc = "(暂无描述)"
-    # Ensure description ends with proper punctuation
-    if len(desc) > 120:
-        desc = desc[:120] + "..."
 
-    lines = [
+    parts = [
         f"**{fullname}**",
-        f"> {desc}",
-        f"⭐{stars:,}  •  +{added:,} today  •  [{lang or 'Unknown'}]({url})",
+        f"  {desc}",
+        f"  ⭐{stars:,} · +{added:,} today · {lang or 'Unknown'}",
     ]
-    return "\n".join(lines)
+    return "\n".join(parts)
 
 
 def format_lang_header(lang_tag: str) -> str:

@@ -1,4 +1,4 @@
-"""GitHub Trending Daily Push — fetch trending repos by language, summarize with AI, and push to WeChat."""
+"""GitHub Trending Daily Push — fetch trending repos by language, enrich with AI, and push to WeChat."""
 
 import sys
 import json
@@ -7,51 +7,58 @@ from datetime import datetime, timezone, timedelta
 
 from fetcher import fetch_all, normalize_repo
 from classifier import classify, format_repo_card, format_lang_header
+from enricher import enrich_descriptions
 from summarizer import summarize
 from pusher import send_daily_report
 from config import TOP_OVERALL, TOP_PER_LANGUAGE, TRENDING_PERIOD, DEBUG
 
-# Beijing timezone
 TZ_BEIJING = timezone(timedelta(hours=8))
 
 
-def build_report(classified: dict, ai_result: dict | None, date_str: str) -> str:
+def inject_cn_descriptions(classified: dict, cn_map: dict[str, str]):
+    """Inject enriched Chinese descriptions into repo dicts."""
+    for repos in classified.get("by_language", {}).values():
+        for repo in repos:
+            name = repo.get("fullname", "")
+            if name in cn_map:
+                repo["desc_cn"] = cn_map[name]
+    for repo in classified.get("top_overall", []):
+        name = repo.get("fullname", "")
+        if name in cn_map:
+            repo["desc_cn"] = cn_map[name]
+
+
+def collect_all_repos(classified: dict) -> list[dict]:
+    """Collect all unique repos from classified data."""
+    seen = set()
+    result = []
+    for repos in classified.get("by_language", {}).values():
+        for repo in repos:
+            name = repo.get("fullname", "")
+            if name not in seen:
+                seen.add(name)
+                result.append(repo)
+    return result
+
+
+def build_report(classified: dict, date_str: str) -> str:
     """Build the daily report in clean Markdown format."""
     lines = []
 
     lines.append(f"# GitHub Trending {date_str[:10]}")
     lines.append("")
 
-    # AI Summary
-    if ai_result:
-        summary_text = ai_result.get("summary", "")
-        if summary_text:
-            lines.append(f"###  今日趋势")
-            lines.append(f"> {summary_text}")
-            lines.append("")
-
-        highlights = ai_result.get("highlights", [])
-        if highlights:
-            lines.append("###  值得关注")
-            for h in highlights:
-                name = h.get("name", "")
-                reason = h.get("reason", "")
-                lines.append(f"- **{name}**：{reason}")
-            lines.append("")
-
     # Top 10 overall
     top = classified["top_overall"]
     if top:
-        lines.append(f"---")
         lines.append(f"##  全语言 TOP {len(top)}")
         lines.append("")
         for i, repo in enumerate(top, 1):
-            lines.append(format_repo_card(repo))
+            lines.append(f"**{i}. {format_repo_card(repo)}**")
             lines.append("")
 
     # By language
     by_lang = classified.get("by_language", {})
-    # Sort by total added_stars in each group
     lang_order = sorted(
         by_lang.items(),
         key=lambda kv: sum(r.get("added_stars", 0) for r in kv[1]),
@@ -64,16 +71,15 @@ def build_report(classified: dict, ai_result: dict | None, date_str: str) -> str
         lines.append("")
 
     for lang_tag, repos in lang_order:
-        if not repos or lang_tag == "":  # skip "all languages" in per-lang section
+        if not repos or lang_tag == "":
             continue
         header = format_lang_header(lang_tag)
         lines.append(f"### {header}")
         lines.append("")
         for repo in repos:
-            lines.append(format_repo_card(repo, for_lang_section=True))
+            lines.append(format_repo_card(repo))
             lines.append("")
 
-    # Footer
     k = classified["total_repos"]
     lines.append("---")
     lines.append(f"*{k} 个仓库  •  每日自动推送  •  github.com/trending*")
@@ -82,7 +88,6 @@ def build_report(classified: dict, ai_result: dict | None, date_str: str) -> str
 
 
 def save_history(classified: dict, filepath: str = "data/history.json"):
-    """Save today's repo names to history for dedup."""
     os.makedirs(os.path.dirname(filepath), exist_ok=True)
 
     today = datetime.now(TZ_BEIJING).strftime("%Y-%m-%d")
@@ -93,7 +98,6 @@ def save_history(classified: dict, filepath: str = "data/history.json"):
         except (json.JSONDecodeError, IOError):
             pass
 
-    # Keep only last 30 days
     history = {k: v for k, v in history.items() if k >= _days_ago(30)}
 
     names = []
@@ -116,50 +120,53 @@ def main():
     print("=" * 50)
 
     # 1. Fetch
-    print("\n[1/4] Fetching trending repos...")
+    print("\n[1/5] Fetching trending repos...")
     raw = fetch_all(since=TRENDING_PERIOD)
-
-    # Normalize all repos
     normalized: dict[str, list[dict]] = {}
     for lang_tag, repos in raw.items():
         normalized[lang_tag] = [normalize_repo(r, lang_tag) for r in repos]
 
     # 2. Classify
-    print("\n[2/4] Classifying by language...")
+    print("\n[2/5] Classifying by language...")
     classified = classify(normalized)
-    print(f"  {classified['total_repos']} repos after filtering "
-          f"(top {TOP_PER_LANGUAGE} per language, top {TOP_OVERALL} overall)")
+    print(f"  {classified['total_repos']} repos after filtering")
 
-    # 3. AI Summary (optional)
-    print("\n[3/4] Generating AI summary...")
+    # 3. Enrich with Chinese descriptions
+    print("\n[3/5] AI enriching descriptions...")
+    all_repos = collect_all_repos(classified)
+    cn_map = enrich_descriptions(all_repos)
+    inject_cn_descriptions(classified, cn_map)
+    print(f"  {len(cn_map)} descriptions enriched")
+
+    # 4. AI Summary
+    print("\n[4/5] Generating AI summary...")
     ai_result = summarize(classified)
     if ai_result:
         print(f"  Summary: {ai_result.get('summary', '')[:100]}...")
     else:
-        print("  Skipped (no LLM configured or API error)")
+        print("  Skipped")
 
-    # 4. Build report and push
-    print("\n[4/4] Building report and pushing to WeChat...")
+    # 5. Build report and push
+    print("\n[5/5] Building report and pushing to WeChat...")
     date_str = datetime.now(TZ_BEIJING).strftime("%Y-%m-%d %A")
-    report = build_report(classified, ai_result, date_str)
+    report = build_report(classified, date_str)
 
     if DEBUG:
         print(f"\n--- Report Preview ({len(report)} chars) ---")
         try:
-            print(report[:2000])
+            print(report[:3000])
         except UnicodeEncodeError:
-            # Windows GBK terminal can't print emoji
-            print(report[:2000].encode("utf-8", errors="replace").decode("utf-8", errors="replace"))
+            print(report[:3000].encode("utf-8", errors="replace")
+                  .decode("utf-8", errors="replace"))
         print("...")
 
     success = send_daily_report(report)
     if success:
         print("\n  Done! Report pushed to WeChat.")
     else:
-        print("\n  Push failed. Check WXPUSHER_SPT configuration.", file=sys.stderr)
+        print("\n  Push failed.", file=sys.stderr)
         sys.exit(1)
 
-    # Save history for dedup
     save_history(classified)
     print("  History saved.")
 

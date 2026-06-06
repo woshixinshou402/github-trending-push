@@ -69,8 +69,8 @@ WXPUSHER_UID = os.environ.get("WXPUSHER_UID", "")
 
 # LLM configuration (optional, for AI summary)
 LLM_API_KEY = os.environ.get("LLM_API_KEY", "")
-LLM_API_BASE = os.environ.get("LLM_API_BASE", "https://api.openai.com/v1")
-LLM_MODEL = os.environ.get("LLM_MODEL", "gpt-4o-mini")
+LLM_API_BASE = os.environ.get("LLM_API_BASE", "https://token-plan-cn.xiaomimimo.com/v1")
+LLM_MODEL = os.environ.get("LLM_MODEL", "mimo-v2.5-pro")
 
 # GitHub Actions outputs debug info
 DEBUG = os.environ.get("DEBUG", "").lower() == "true"
