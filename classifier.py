@@ -52,18 +52,13 @@ def format_repo_card(repo: dict, idx: int = 0) -> str:
     stars = repo.get("stars", 0)
     added = repo.get("added_stars", 0)
     lang = repo.get("language", "")
+    url = f"https://github.com/{fullname}"
 
     desc = repo.get("desc_cn", "") or repo.get("description", "") or ""
     desc = desc.strip().replace("\n", " ")
-    if len(desc) > 100:
-        desc = desc[:100] + "..."
 
     num = f"{idx}." if idx else ""
-    return (
-        f"**{num} {fullname}**\n"
-        f"  {desc}\n"
-        f"  +{added:,} today  |  {lang or 'Unknown'}"
-    )
+    return f"{num} {fullname}\n{desc}\n{url}\n+{added:,}  {lang}  {stars:,}"
 
 
 def format_lang_header(lang_tag: str) -> str:

@@ -34,12 +34,12 @@ def collect_all_repos(classified: dict) -> list[dict]:
 def build_report(classified: dict, date_str: str) -> str:
     lines = []
 
-    lines.append(f"# GitHub Trending {date_str[:10]}")
+    lines.append(f"GitHub Trending  {date_str[:10]}")
     lines.append("")
 
     top = classified["top_overall"]
     if top:
-        lines.append(f"##  TOP {len(top)}")
+        lines.append(f"=== TOP {len(top)} ===")
         lines.append("")
         for i, repo in enumerate(top, 1):
             lines.append(format_repo_card(repo, idx=i))
@@ -53,23 +53,22 @@ def build_report(classified: dict, date_str: str) -> str:
     )
 
     if lang_order:
-        lines.append("---")
-        lines.append("##  分类")
+        lines.append("==========")
         lines.append("")
 
     for lang_tag, repos in lang_order:
         if not repos or lang_tag == "":
             continue
         h = format_lang_header(lang_tag)
-        lines.append(f"### {h}")
+        lines.append(f"-- {h} --")
         lines.append("")
         for repo in repos:
             lines.append(format_repo_card(repo))
             lines.append("")
 
     k = classified["total_repos"]
-    lines.append("---")
-    lines.append(f"*{k} 个仓库  |  每日自动推送  |  github.com/trending*")
+    lines.append("==========")
+    lines.append(f"{k} repos  github.com/trending")
 
     return "\n".join(lines)
 
