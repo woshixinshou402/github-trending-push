@@ -63,4 +63,4 @@ def format_repo_card(repo: dict, idx: int = 0) -> str:
 
 def format_lang_header(lang_tag: str) -> str:
     emoji, name = LANG_DISPLAY.get(lang_tag, ("", lang_tag or "Other"))
-    return f"**{emoji} {name}**"
+    return f"{emoji} {name}"
