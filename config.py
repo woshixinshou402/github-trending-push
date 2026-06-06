@@ -1,26 +1,58 @@
 import os
 
-# Only track these languages
 LANGUAGES = [
+    "",             # all languages
     "python",
+    "javascript",
+    "typescript",
+    "go",
+    "rust",
+    "java",
+    "c",
     "c++",
+    "c#",
+    "swift",
+    "kotlin",
+    "ruby",
+    "php",
+    "vue",
+    "html",
+    "css",
+    "shell",
+    "jupyter-notebook",
+    "dart",
+    "scala",
 ]
 
 LANG_DISPLAY = {
-    "python":      ("Python", "python"),
-    "c++":         ("C++", "c++"),
+    "":            ("", "全语言"),
+    "python":      ("", "Python"),
+    "javascript":  ("", "JavaScript"),
+    "typescript":  ("", "TypeScript"),
+    "go":          ("", "Go"),
+    "rust":        ("", "Rust"),
+    "java":        ("", "Java"),
+    "c":           ("", "C"),
+    "c++":         ("", "C++"),
+    "c#":          ("", "C#"),
+    "swift":       ("", "Swift"),
+    "kotlin":      ("", "Kotlin"),
+    "ruby":        ("", "Ruby"),
+    "php":         ("", "PHP"),
+    "vue":         ("", "Vue"),
+    "html":        ("", "HTML"),
+    "css":         ("", "CSS"),
+    "shell":       ("", "Shell"),
+    "jupyter-notebook": ("", "Jupyter Notebook"),
+    "dart":        ("", "Dart"),
+    "scala":       ("", "Scala"),
 }
 
-# Minimum added stars today to include
-MIN_ADDED_STARS = 500
-
-# Number of repos in the daily push
+MIN_TOTAL_STARS = 100
+TOP_PER_LANGUAGE = 8
 TOP_OVERALL = 40
-
-# Trending period: "daily" or "weekly"
 TRENDING_PERIOD = "daily"
 
-# Filter out repos with these keywords in name/description (case-insensitive)
 EXCLUDE_KEYWORDS = [
     "security", "vulnerability", "exploit", "pentest", "penetration",
     "hack", "malware", "phishing", "cve-", "backdoor", "ransomware",
@@ -31,11 +63,9 @@ EXCLUDE_KEYWORDS = [
     "osint", "steganography", "forensic",
 ]
 
-# WxPusher configuration
 WXPUSHER_APP_TOKEN = os.environ.get("WXPUSHER_APP_TOKEN", "")
 WXPUSHER_UID = os.environ.get("WXPUSHER_UID", "")
 
-# LLM configuration
 LLM_API_KEY = os.environ.get("LLM_API_KEY") or ""
 LLM_API_BASE = os.environ.get("LLM_API_BASE") or "https://token-plan-cn.xiaomimimo.com/v1"
 LLM_MODEL = os.environ.get("LLM_MODEL") or "mimo-v2.5-pro"
