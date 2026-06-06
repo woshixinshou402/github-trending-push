@@ -50,27 +50,32 @@ def classify(repos_by_lang: dict[str, list[dict]]) -> dict:
     }
 
 
-def format_repo_line(repo: dict, show_lang: bool = True) -> str:
-    """Format a single repo as a one-line string for push message."""
+def format_repo_card(repo: dict, for_lang_section: bool = False) -> str:
+    """Format a repo as a readable card with clear description of what it does."""
     fullname = repo.get("fullname", "")
     stars = repo.get("stars", 0)
     added = repo.get("added_stars", 0)
-    desc = repo.get("description", "")
+    desc = repo.get("description", "") or ""
+    url = repo.get("url", f"https://github.com/{fullname}")
     lang = repo.get("language", "")
 
-    stars_str = f"⭐{stars:,}"
-    added_str = f"+{added:,}" if added else ""
+    # Build clean description
+    desc = desc.strip().replace("\n", " ")
+    if not desc:
+        desc = "(暂无描述)"
+    # Ensure description ends with proper punctuation
+    if len(desc) > 120:
+        desc = desc[:120] + "..."
 
-    line = f"<b>{fullname}</b> — {stars_str} ({added_str})"
-    if show_lang and lang:
-        line += f" | {lang}"
-    if desc:
-        desc_short = desc[:80] + ("..." if len(desc) > 80 else "")
-        line += f"\n  {desc_short}"
-    return line
+    lines = [
+        f"**{fullname}**",
+        f"> {desc}",
+        f"⭐{stars:,}  •  +{added:,} today  •  [{lang or 'Unknown'}]({url})",
+    ]
+    return "\n".join(lines)
 
 
 def format_lang_header(lang_tag: str) -> str:
     """Get emoji + display name for a language tag."""
     emoji, name = LANG_DISPLAY.get(lang_tag, ("📦", lang_tag or "Other"))
-    return f"{emoji} {name}"
+    return f"**{emoji} {name}**"

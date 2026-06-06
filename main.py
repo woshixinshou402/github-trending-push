@@ -6,7 +6,7 @@ import os
 from datetime import datetime, timezone, timedelta
 
 from fetcher import fetch_all, normalize_repo
-from classifier import classify, format_repo_line, format_lang_header
+from classifier import classify, format_repo_card, format_lang_header
 from summarizer import summarize
 from pusher import send_daily_report
 from config import TOP_OVERALL, TOP_PER_LANGUAGE, TRENDING_PERIOD, DEBUG
@@ -16,57 +16,67 @@ TZ_BEIJING = timezone(timedelta(hours=8))
 
 
 def build_report(classified: dict, ai_result: dict | None, date_str: str) -> str:
-    """Build the full HTML report string from classified data and AI summary."""
+    """Build the daily report in clean Markdown format."""
     lines = []
 
-    # Header
-    lines.append(f"<h2>GitHub Trending 日报 | {date_str}</h2>")
+    lines.append(f"# GitHub Trending {date_str[:10]}")
+    lines.append("")
 
-    # AI Summary section
+    # AI Summary
     if ai_result:
-        lines.append("<h3> 今日总览</h3>")
         summary_text = ai_result.get("summary", "")
         if summary_text:
-            lines.append(f"<blockquote>{summary_text}</blockquote>")
+            lines.append(f"###  今日趋势")
+            lines.append(f"> {summary_text}")
+            lines.append("")
 
         highlights = ai_result.get("highlights", [])
         if highlights:
-            lines.append("<p><b> 精选推荐：</b></p>")
+            lines.append("###  值得关注")
             for h in highlights:
                 name = h.get("name", "")
                 reason = h.get("reason", "")
-                lines.append(f"  <b>{name}</b> — {reason}")
+                lines.append(f"- **{name}**：{reason}")
+            lines.append("")
 
-    # Top overall
-    lines.append("<h3> 全语言 TOP {}</h3>".format(len(classified["top_overall"])))
-    for i, repo in enumerate(classified["top_overall"], 1):
-        lines.append(f"{i}. {format_repo_line(repo)}")
+    # Top 10 overall
+    top = classified["top_overall"]
+    if top:
+        lines.append(f"---")
+        lines.append(f"##  全语言 TOP {len(top)}")
+        lines.append("")
+        for i, repo in enumerate(top, 1):
+            lines.append(format_repo_card(repo))
+            lines.append("")
 
     # By language
-    lines.append("<h3> 按语言分类</h3>")
     by_lang = classified.get("by_language", {})
-    # Sort languages by total added_stars in each group
+    # Sort by total added_stars in each group
     lang_order = sorted(
         by_lang.items(),
         key=lambda kv: sum(r.get("added_stars", 0) for r in kv[1]),
         reverse=True,
     )
 
+    if lang_order:
+        lines.append("---")
+        lines.append("##  按语言分类")
+        lines.append("")
+
     for lang_tag, repos in lang_order:
-        if not repos:
+        if not repos or lang_tag == "":  # skip "all languages" in per-lang section
             continue
         header = format_lang_header(lang_tag)
-        lines.append(f"<p><b>{header}</b></p>")
-        for i, repo in enumerate(repos, 1):
-            lines.append(f"  {i}. {format_repo_line(repo, show_lang=False)}")
+        lines.append(f"### {header}")
+        lines.append("")
+        for repo in repos:
+            lines.append(format_repo_card(repo, for_lang_section=True))
+            lines.append("")
 
     # Footer
-    lines.append("<hr>")
-    lines.append(
-        "<small>数据来源: github.com/trending | "
-        f"共收录 {classified['total_repos']} 个仓库 | "
-        f"每日 {date_str[:5]} 自动推送</small>"
-    )
+    k = classified["total_repos"]
+    lines.append("---")
+    lines.append(f"*{k} 个仓库  •  每日自动推送  •  github.com/trending*")
 
     return "\n".join(lines)
 

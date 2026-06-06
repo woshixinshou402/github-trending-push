@@ -19,7 +19,8 @@ def push_to_wechat(content: str) -> bool:
     body = {
         "appToken": WXPUSHER_APP_TOKEN,
         "content": content,
-        "contentType": 2,  # 2 = HTML
+        "contentType": 3,  # 3 = Markdown
+        "summary": content.split("\n")[0][:20] if content else "",
         "uids": uids,
     }
 
