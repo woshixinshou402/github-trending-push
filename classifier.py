@@ -47,7 +47,7 @@ def classify(repos_by_lang: dict[str, list[dict]]) -> dict:
     }
 
 
-def format_repo_card(repo: dict, idx: int = 0) -> str:
+def format_repo_html(repo: dict, idx: int = 0) -> str:
     fullname = repo.get("fullname", "")
     stars = repo.get("stars", 0)
     added = repo.get("added_stars", 0)
@@ -57,10 +57,18 @@ def format_repo_card(repo: dict, idx: int = 0) -> str:
     desc = repo.get("desc_cn", "") or repo.get("description", "") or ""
     desc = desc.strip().replace("\n", " ")
 
-    num = f"{idx}." if idx else ""
-    return f"{num} {fullname}\n{desc}\n{url}\n+{added:,}  {lang}  {stars:,}"
+    num = f'{idx}.' if idx else ''
+    return f'''<tr>
+<td style="vertical-align:top;padding:10px 0;border-bottom:1px solid #eee">
+  <a href="{url}" style="font-weight:bold;font-size:15px;text-decoration:none;color:#0366d6">{num} {fullname}</a>
+  <p style="margin:4px 0;color:#333;font-size:13px">{desc}</p>
+  <span style="font-size:12px;color:#586069">
+    ⭐{stars:,} &nbsp; +{added:,} today &nbsp; {lang}
+  </span>
+</td>
+</tr>'''
 
 
 def format_lang_header(lang_tag: str) -> str:
     emoji, name = LANG_DISPLAY.get(lang_tag, ("", lang_tag or "Other"))
-    return f"{emoji} {name}"
+    return f'{emoji} {name}'
